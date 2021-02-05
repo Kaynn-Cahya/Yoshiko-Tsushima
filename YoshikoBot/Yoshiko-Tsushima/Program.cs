@@ -1,10 +1,11 @@
 ﻿using Discord;
 using Discord.WebSocket;
 using Newtonsoft.Json;
-using System;
 using System.IO;
 using System.Reflection;
 using System.Threading.Tasks;
+
+using Discord.Commands;
 
 using YoshikoBot.Models;
 
@@ -18,6 +19,8 @@ namespace YoshikoBot {
         }
 
         private DiscordSocketClient client;
+        private CommandHandler commandHandler;
+        private CommandService commandService;
 
         public static void Main(string[] args)
 			=> new Program().MainAsync().GetAwaiter().GetResult();
@@ -26,6 +29,7 @@ namespace YoshikoBot {
             client = new DiscordSocketClient();
 
             client.Log += Log;
+            await SetupCommandModules();
 
             string token = JsonConvert.DeserializeObject<Credentials>(File.ReadAllText(CredentialsFilePath)).Token;
 
@@ -33,6 +37,15 @@ namespace YoshikoBot {
             await client.StartAsync();
 
             await Task.Delay(-1);
+
+            #region Local_Function
+            async Task SetupCommandModules() {
+                commandService = new CommandService();
+
+                commandHandler = new CommandHandler(client, commandService);
+                await commandHandler.InstallCommandsAsync();
+            }
+            #endregion
         }
 
         private Task Log(LogMessage msg) {

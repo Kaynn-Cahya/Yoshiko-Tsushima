@@ -24,7 +24,7 @@ namespace YoshikoBot {
         }
 
         public static void Log(LogMessage logMessage) {
-            string message = @"{logMessage.Message} occured at {logMessage.Source}";
+            string message = $"{logMessage.Message} @ {logMessage.Source}";
             Log(logMessage.Severity, message);
         }
 
