@@ -10,4 +10,10 @@
     <PackageReference Include="Discord.Net" Version="2.3.0" />
   </ItemGroup>
 
+  <ItemGroup>
+    <None Update="Credentials\Token.json">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
 </Project>
