@@ -25,12 +25,19 @@ namespace YoshikoBot {
         public async Task MainAsync() {
             client = new DiscordSocketClient();
 
+            client.Log += Log;
+
             string token = JsonConvert.DeserializeObject<Credentials>(File.ReadAllText(CredentialsFilePath)).Token;
 
             await client.LoginAsync(TokenType.Bot, token);
             await client.StartAsync();
 
             await Task.Delay(-1);
+        }
+
+        private Task Log(LogMessage msg) {
+            Logger.Log(msg);
+            return Task.CompletedTask;
         }
     }
 }
