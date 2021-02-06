@@ -1,6 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
+﻿using System.Collections.Generic;
 using System.Threading.Tasks;
 
 using YoshikoDB.Models;
@@ -14,6 +12,10 @@ namespace YoshikoDB {
 
         public Task<Channel> FetchChannelData(string channelID) {
             return Database.FetchChannelData(channelID);
+        }
+
+        public Task<HashSet<Channel>> FetchAllChannelsData() {
+            return Database.FetchAllChannelData();
         }
 
     }
