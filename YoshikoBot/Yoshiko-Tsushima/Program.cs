@@ -19,6 +19,7 @@ namespace YoshikoBot {
         }
 
         private DiscordSocketClient client;
+
         private CommandHandler commandHandler;
         private CommandService commandService;
 

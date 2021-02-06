@@ -4,6 +4,8 @@
         Daily,
         Weekly,
         Monthly,
-        Quarterly
+        Quarterly,
+        PvP, // Special case for Kancolle
+        Training, // Special case for LoveLive
     }
 }
