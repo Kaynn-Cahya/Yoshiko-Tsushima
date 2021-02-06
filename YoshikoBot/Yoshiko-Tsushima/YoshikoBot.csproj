@@ -11,6 +11,10 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\YoshikoDB\YoshikoDB.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
     <None Update="Credentials\Token.json">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
