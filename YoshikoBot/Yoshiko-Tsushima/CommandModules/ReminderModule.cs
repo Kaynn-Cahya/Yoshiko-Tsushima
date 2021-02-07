@@ -63,15 +63,13 @@ namespace YoshikoBot.CommandModules {
             #region Local_Function
 
             bool FlipChannelCurrentRemindState() {
-                if (!currChannelData.GameReminders.ContainsKey(inputGameReminder)) {
-                    currChannelData.GameReminders.Add(inputGameReminder, true);
-                    return true;
-                }
+                var currState = currChannelData.GetGameReminderState(inputGameReminder);
 
-                bool currRemindState = currChannelData.GameReminders[inputGameReminder];
-                currChannelData.GameReminders[inputGameReminder] = !currRemindState;
+                currState = !currState;
 
-                return !currRemindState;
+                currChannelData.SetGameReminderState(inputGameReminder, currState);
+
+                return currState;
             }
 
             bool TryFindReminderType(out ReminderType reminderType) {

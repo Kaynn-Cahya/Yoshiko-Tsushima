@@ -120,7 +120,7 @@ namespace YoshikoBot.Persistence {
             foreach (var channel in allChannels) {
                 foreach (var gameToRemind in channel.GameReminders) {
                     if (gameToRemind.Value) {
-                        AddToSubscribedChannel(gameToRemind.Key, channel.ChannelID);
+                        AddToSubscribedChannel(GameReminder.FromString(gameToRemind.Key), channel.ChannelID);
                     }
                 }
             }

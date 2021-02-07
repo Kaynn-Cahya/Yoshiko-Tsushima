@@ -15,7 +15,7 @@ namespace YoshikoDB {
 
         private static string DatabaseRootPath {
             get {
-                return Path.Combine(Assembly.GetEntryAssembly().Location);
+                return Path.GetDirectoryName(Assembly.GetEntryAssembly().Location);
             }
         }
 
