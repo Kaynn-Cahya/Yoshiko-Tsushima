@@ -8,6 +8,7 @@ using System.Threading.Tasks;
 using Discord.Commands;
 
 using YoshikoBot.Models;
+using YoshikoBot.Persistence;
 
 namespace YoshikoBot {
 	public class Program {
@@ -31,6 +32,8 @@ namespace YoshikoBot {
 
             client.Log += Log;
             await SetupCommandModules();
+
+            await ReminderTimers.Instance.Initalize(client);
 
             string token = JsonConvert.DeserializeObject<Credentials>(File.ReadAllText(CredentialsFilePath)).Token;
 
