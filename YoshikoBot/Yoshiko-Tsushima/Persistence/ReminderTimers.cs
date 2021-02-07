@@ -20,9 +20,9 @@ namespace YoshikoBot.Persistence {
         #region PresetTimers
 
         private class PresetTimer {
-            public delegate void AlertReminder(GameReminder gameReminder, AlertTimings alertTimings);
+            public delegate Task AlertReminder(GameReminder gameReminder, AlertTimings alertTimings);
 
-            public AlertReminder ToRemind { get; private set; }
+            public AlertReminder ToRemind { get; set; }
 
             private Timer timer;
 
@@ -88,6 +88,8 @@ namespace YoshikoBot.Persistence {
 
         public bool Initalized { get; private set; }
 
+        private DiscordSocketClient clientRef;
+
         /// <summary>
         /// Channels to remind.
         /// </summary>
@@ -101,11 +103,12 @@ namespace YoshikoBot.Persistence {
         /// </summary>
         private HashSet<Timer> customTimers;
 
-        internal async Task Initalize() {
+        internal async Task Initalize(DiscordSocketClient client) {
             if (Initalized) {
                 Logger.Log(Discord.LogSeverity.Warning, $"ReminderTimer got initalized again;");
             }
 
+            clientRef = client;
             presetTimers = new HashSet<PresetTimer>();
             customTimers = new HashSet<Timer>();
 
@@ -129,7 +132,7 @@ namespace YoshikoBot.Persistence {
             Initalized = true;
         }
 
-        private void AddToSubscribedChannel(GameReminder gameReminder, string channelID) {
+        internal void AddToSubscribedChannel(GameReminder gameReminder, string channelID) {
             if (subscribedChannels.ContainsKey(gameReminder)) {
                 subscribedChannels[gameReminder].Add(channelID);
             } else {
@@ -140,6 +143,12 @@ namespace YoshikoBot.Persistence {
             }
         }
 
+        internal void RemoveFromSubscribedChannel(GameReminder gameReminder, string channelID) {
+            if (subscribedChannels.ContainsKey(gameReminder)) {
+                subscribedChannels[gameReminder].Remove(channelID);
+            }
+        }
+
         private void CreateGameTimerIfNotExists(GameReminder gameReminder) {
             foreach (var presetTimer in presetTimers) {
                 if (presetTimer.GameReminder == gameReminder) {
@@ -147,8 +156,52 @@ namespace YoshikoBot.Persistence {
                 }
             }
 
-            PresetTimer newTimer = new PresetTimer(gameReminder);
+            PresetTimer newTimer = new PresetTimer(gameReminder) {
+                ToRemind = RemindChannels
+            };
             presetTimers.Add(newTimer);
+        }
+
+        private Task RemindChannels(GameReminder gameReminder, AlertTimings alertTimings) {
+            if (!subscribedChannels.ContainsKey(gameReminder)) {
+                Logger.Log(Discord.LogSeverity.Error, $"Alert triggered but no channel list is created for it! @ {gameReminder}");
+            }
+
+            string alertMsg = CreateAlertMessage();
+
+            HashSet<string> channelsToRemind = subscribedChannels[gameReminder];
+
+            var remindTasks = new HashSet<Task>();
+            foreach (var channelId in channelsToRemind) {
+                remindTasks.Add(Task.Run(() => {
+                    (clientRef.GetChannel(Convert.ToUInt64(channelId)) as SocketTextChannel).SendMessageAsync(alertMsg);
+                }));
+            }
+
+            Task remindingTask = Task.WhenAll(remindTasks);
+            remindingTask.Wait();
+
+            return Task.CompletedTask;
+
+            #region Local_Function
+
+            string CreateAlertMessage() {
+                StringBuilder msg = new StringBuilder();
+                msg.Append(Enum.GetName(typeof(GameType), gameReminder.GameType).Replace("_", " ") + " ");
+                msg.Append(Enum.GetName(typeof(ReminderType), gameReminder.ReminderType).ToLower() + " ");
+
+                if (alertTimings == AlertTimings.Just_Occured) {
+                    msg.Append("have been resetted!");
+                } else if (alertTimings == AlertTimings.One_Hour_Before) {
+                    msg.Append("will reset in 1 hour!");
+                } else if (alertTimings == AlertTimings.Two_Hour_Before) {
+                    msg.Append("will reset in 2 hour!");
+                }
+
+                return msg.ToString();
+            }
+
+            #endregion
         }
 
         #region Utils
