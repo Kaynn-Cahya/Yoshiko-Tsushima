@@ -1,9 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace YoshikoBot.Models {
+﻿namespace YoshikoBot.Models {
     internal class Credentials {
         public string Token { get; set; }
+
+        public string Debug_Token { get; set; }
     }
 }

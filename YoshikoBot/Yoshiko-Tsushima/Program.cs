@@ -31,11 +31,16 @@ namespace YoshikoBot {
             client = new DiscordSocketClient();
 
             client.Log += Log;
+            client.Ready += Ready;
             await SetupCommandModules();
 
             await ReminderTimers.Instance.Initalize(client);
 
+#if DEBUG
+            string token = JsonConvert.DeserializeObject<Credentials>(File.ReadAllText(CredentialsFilePath)).Debug_Token;
+#else
             string token = JsonConvert.DeserializeObject<Credentials>(File.ReadAllText(CredentialsFilePath)).Token;
+#endif
 
             await client.LoginAsync(TokenType.Bot, token);
             await client.StartAsync();
@@ -52,6 +57,12 @@ namespace YoshikoBot {
             #endregion
         }
 
+        private Task Ready() {
+
+            Logger.Log(LogSeverity.Info, "Logged in as " + client.CurrentUser.Username);
+
+            return Task.CompletedTask;
+        }
         private Task Log(LogMessage msg) {
             Logger.Log(msg);
             return Task.CompletedTask;

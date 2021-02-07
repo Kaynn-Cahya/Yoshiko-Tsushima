@@ -11,7 +11,7 @@ using YoshikoDB;
 namespace YoshikoBot.Persistence {
     internal class ReminderTimers {
 
-        private enum AlertTimings { 
+        private enum AlertTimings {
             Two_Hour_Before,
             One_Hour_Before,
             Just_Occured
@@ -39,14 +39,14 @@ namespace YoshikoBot.Persistence {
                 DateTime nextReset = GetNextResetTime(GameReminder);
                 DateTime timeNow = GetDateTimeNow_JST();
 
-                int hourDiff = nextReset.Hour - timeNow.Hour;
+                int hourDiff = (int)(Math.Floor((nextReset - timeNow).TotalHours));
 
                 if (hourDiff > 2) {
                     currAlertTiming = AlertTimings.Two_Hour_Before;
-                    nextReset.AddHours(-2);
+                    nextReset -= new TimeSpan(2, 0, 0);
                 } else if (hourDiff > 1) {
                     currAlertTiming = AlertTimings.One_Hour_Before;
-                    nextReset.AddHours(-1);
+                    nextReset -= new TimeSpan(1, 0, 0);
                 } else {
                     currAlertTiming = AlertTimings.Just_Occured;
                 }
@@ -57,7 +57,7 @@ namespace YoshikoBot.Persistence {
                     timer = new Timer(Alert);
                 }
 
-                timer.Change(TimeSpan.Zero, timeDiff);
+                timer.Change(timeDiff, timeDiff);
             }
 
             private void Alert(Object objInfo) {
@@ -117,6 +117,8 @@ namespace YoshikoBot.Persistence {
             Query query = new Query();
             HashSet<Channel> allChannels = await query.FetchAllChannelsData();
 
+            var addToSubscribedChannelTasks = new HashSet<Task>();
+
             foreach (var channel in allChannels) {
                 foreach (var gameToRemind in channel.GameReminders) {
                     if (gameToRemind.Value) {
@@ -136,10 +138,12 @@ namespace YoshikoBot.Persistence {
             if (subscribedChannels.ContainsKey(gameReminder)) {
                 subscribedChannels[gameReminder].Add(channelID);
             } else {
-                HashSet<string> newSet = new HashSet<string>() { 
+                HashSet<string> newSet = new HashSet<string>() {
                     channelID
                 };
                 subscribedChannels.Add(gameReminder, newSet);
+
+                CreateGameTimerIfNotExists(gameReminder);
             }
         }
 
@@ -173,8 +177,9 @@ namespace YoshikoBot.Persistence {
 
             var remindTasks = new HashSet<Task>();
             foreach (var channelId in channelsToRemind) {
+                var channelIdRef = channelId;
                 remindTasks.Add(Task.Run(() => {
-                    (clientRef.GetChannel(Convert.ToUInt64(channelId)) as SocketTextChannel).SendMessageAsync(alertMsg);
+                    (clientRef.GetChannel(Convert.ToUInt64(channelIdRef)) as SocketTextChannel).SendMessageAsync(alertMsg);
                 }));
             }
 
@@ -253,15 +258,22 @@ namespace YoshikoBot.Persistence {
             DateTime GetDailyResetTime(GameType gameType) {
                 DateTime currDate = GetDateTimeNow_JST().AddDays(1);
 
-                return new DateTime(currDate.Year, currDate.Month, currDate.Day,
-                    GetResetHourByGame(gameType), 0, 0, currDate.Kind);
+                int resetHour = GetResetHourByGame(gameType);
+
+                if (GetResetHourByGame(gameType) == 24) {
+                    return new DateTime(currDate.Year, currDate.Month, currDate.Day + 1,
+                    0, 0, 0, currDate.Kind);
+                } else {
+                    return new DateTime(currDate.Year, currDate.Month, currDate.Day,
+                        resetHour, 0, 0, currDate.Kind);
+                }
             }
 
             DateTime GetPvPResetTiming() {
                 DateTime currDate = GetDateTimeNow_JST();
 
                 if (currDate.Hour >= 15) {
-                    currDate.AddDays(1);
+                    currDate = currDate.AddDays(1);
 
                     return new DateTime(currDate.Year, currDate.Month, currDate.Day,
                         3, 0, 0, currDate.Kind);
@@ -275,7 +287,7 @@ namespace YoshikoBot.Persistence {
                 DateTime currDate = GetDateTimeNow_JST();
 
                 if (currDate.Hour >= 12) {
-                    currDate.AddDays(1);
+                    currDate = currDate.AddDays(1);
 
                     return new DateTime(currDate.Year, currDate.Month, currDate.Day,
                         0, 0, 0, currDate.Kind);
